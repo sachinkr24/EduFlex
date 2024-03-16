@@ -2,9 +2,9 @@
 
 export const signUp = async (obj, navigate) => {
 
-    const Role = obj.alignment;
+    const role = obj.alignment;
 
-    const endpoint = Role === 'ADMIN' ? 'admin' : 'users';
+    const endpoint = role === 'ADMIN' ? 'admin' : 'users';
     console.log(`Endpoint: http://localhost:3000/${endpoint}/signup`);
 
     fetch(`http://localhost:3000/${endpoint}/signup`, {

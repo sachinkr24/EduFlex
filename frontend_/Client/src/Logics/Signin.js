@@ -1,8 +1,8 @@
 
 
 export const signIn = async (obj, navigate) => {
-    const Role = obj.alignment;
-    const endpoint = Role === 'ADMIN' ? 'admin' : 'users';
+    const role = obj.alignment;
+    const endpoint = role === 'ADMIN' ? 'admin' : 'users';
 
     fetch(`http://localhost:3000/${endpoint}/login`, {
         method: 'POST',

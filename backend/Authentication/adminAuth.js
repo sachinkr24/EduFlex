@@ -1,8 +1,8 @@
 
 import jwt from 'jsonwebtoken'
-import dotenv from 'dotenv'
 
-//dotenv.config({path : 'D:/Coursella/backend/.env'});
+
+//dotenv.config({path : 'D:/EduFlex/backend/.env'});
 
 
 export const authenticateAdminJWT = (req, res, next) => {
