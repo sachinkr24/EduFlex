@@ -3,11 +3,20 @@ import Users from '../Models/UserModel.js'
 import Course from '../Models/CourseModels.js'
 import createUserToken from '../Authentication/jwtGenerator.js'
 import jwt from 'jsonwebtoken'
-
+import orderModel from '../Models/orderModel.js'
+import braintree from "braintree";
 
 const app = express();
 app.use(express.json());
 
+
+//payment gateway
+var gateway = new braintree.BraintreeGateway({
+  environment: braintree.Environment.Sandbox,
+  merchantId: "9yqq52jzsy7pxf6s",
+  publicKey: "s7qshvdtnbgpgbq5",
+  privateKey: "f0274771291a0b023ec6460594af142a",
+});
 
 export const signUp = async (req, res) => {
     const { username, email, password } = req.body;
@@ -142,6 +151,57 @@ export const me = async (req, res) => {
   }
 }
 
+
+//payment gateway api
+//token
+export const braintreeTokenController = async (req, res) => {
+  try {
+    gateway.clientToken.generate({}, function (err, response) {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send(response);
+      }
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+//payment
+export const brainTreePaymentController = async (req, res) => {
+  try {
+    const { nonce, cart } = req.body;
+    console.log(cart);
+    let total = 0;
+    cart.map((i) => {
+      total += i.price;
+    });
+    let newTransaction = gateway.transaction.sale(
+      {
+        amount: total,
+        paymentMethodNonce: nonce,
+        options: {
+          submitForSettlement: true,
+        },
+      },
+      function (error, result) {
+        if (result) {
+          const order = new orderModel({
+            products: cart,
+            payment: result,
+            buyer: req.user._id,
+          }).save();
+          res.json({ ok: true });
+        } else {
+          res.status(500).send(error);
+        }
+      }
+    );
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 
 

@@ -8,6 +8,7 @@ import Video from '../Models/Video.js';
 import multer from 'multer';
 
 
+
 const app = express();
 app.use(express.json());
 
@@ -106,10 +107,10 @@ export const login = async (req, res) => {
   
   
   export const me = async (req, res) => {
-    if(req.admin.role === 'ADMIN')
-        res.json({role : 'ADMIN'});
-    else 
-        res.status(403).json({message : 'Admin is not logged in'});
+    // if(req.admin.role === 'ADMIN')
+    //     res.json({role : 'ADMIN'});
+    // else 
+    //     res.status(403).json({message : 'Admin is not logged in'});
   }
   
   export const courseWithId = async (req, res) => {
