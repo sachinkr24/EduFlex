@@ -3,15 +3,18 @@ import DropIn from "braintree-web-drop-in-react";
 import axios from "axios";
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 function Payment() {
 
     const [clientToken, setClientToken] = useState("");
     const [instance, setInstance] = useState("");
-    const [cart, setCart] = useState([]);
+    const [cart, setCart] = useState({});
     const [loading, setLoading]= useState(false);
     const params = useParams();
+
+    const navigate = useNavigate();
 
       //get payment gateway token
   const getToken = async () => {
@@ -22,38 +25,43 @@ function Payment() {
       console.log(error);
     }
   };
+
+  const getCourse = async () => {
+    const courseId = params.courseId;
+    axios.get("http://localhost:3000/users/courses/" + courseId, {
+        headers: {
+            "authorization": "Bearer " + localStorage.getItem("token")
+        }
+    }).then(res => {
+        setCart(res.data);
+    });
+}
+
   useEffect(() => {
     getToken();
+    getCourse();
   }, []);
-
-  useEffect(() => {
-    const getCourse = async () => {
-        const courseId = params.courseId;
-        try{
-            const course = await axios.get("http://localhost:3000/admin/courses/" + courseId);
-            setCart(course);
-        } catch (err) {
-            console.log("error : ", err);
-            console.log("courseId : ", courseId);
-        }
-    }
-    
-  }, [])
-
 
    //handle payments
    const handlePayment = async () => {
     try {
       setLoading(true);
-      const { nonce } = await instance.requestPaymentMethod();          // /api/v1/product/braintree/payment
-      const { data } = await axios.post("http://localhost:3000/users/braintree/payment", {
+
+      const { nonce } = await instance.requestPaymentMethod();         // /api/v1/product/braintree/payment
+      
+      await axios.post("http://localhost:3000/users/braintree/payment", {
         nonce,
         cart,
+      }, {
+        headers : {
+            'Content-Type': 'application/json',
+            'authorization' : "Bearer " + localStorage.getItem("token"),
+        }
       });
       setLoading(false);
       localStorage.removeItem("cart");
-      setCart([]);
-      navigate("/dashboard/user/orders");
+      setCart({});
+      navigate("/users/mycourses");
       toast.success("Payment Completed Successfully ");
     } catch (error) {
       console.log(error);
@@ -65,7 +73,6 @@ function Payment() {
 
   return (
     <div className="mt-2">
-        hello.....
               {!clientToken  ? (
                 ""
               ) : 

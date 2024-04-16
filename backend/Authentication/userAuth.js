@@ -9,12 +9,13 @@ export const authenticateUserJWT = (req, res, next) => {
     const authHead = req.headers.authorization;
     if(authHead){
         const token = authHead.split(' ')[1];
-        jwt.verify(token, "8ZBD38wl6QwAhZvOC5PCxwZbpz9MaDjGLw9ljAMACkcdpq3LzdZw4zRDAbG2Ub5E", (err, user) => {
+        jwt.verify(token, process.env.SECRET_KEY, (err, user) => {
             if(err) {
                 return res.sendStatus(403);
             }
             req.user = user;
-            next();
+            if(user.role === 'USER')
+                next();
         })
     } else {
         res.status(401);

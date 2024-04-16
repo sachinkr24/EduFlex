@@ -6,9 +6,6 @@ import jwt from 'jsonwebtoken'
 import orderModel from '../Models/orderModel.js'
 import braintree from "braintree";
 
-const app = express();
-app.use(express.json());
-
 
 //payment gateway
 var gateway = new braintree.BraintreeGateway({
@@ -17,6 +14,11 @@ var gateway = new braintree.BraintreeGateway({
   publicKey: "s7qshvdtnbgpgbq5",
   privateKey: "f0274771291a0b023ec6460594af142a",
 });
+
+
+const app = express();
+app.use(express.json());
+
 
 export const signUp = async (req, res) => {
     const { username, email, password } = req.body;
@@ -31,7 +33,7 @@ export const signUp = async (req, res) => {
         email : email,
         role : "USER",
       }
-      const token = jwt.sign(userJSON, "8ZBD38wl6QwAhZvOC5PCxwZbpz9MaDjGLw9ljAMACkcdpq3LzdZw4zRDAbG2Ub5E", {expiresIn : '1h'});
+      const token = jwt.sign(userJSON, process.env.SECRET_KEY, {expiresIn : '1h'});
       res.json({ message: 'User created successfully', token });
     }
   };
@@ -45,14 +47,13 @@ export const login = async (req, res) => {
         email : email,
         role : "USER",
       }
-      const token = jwt.sign(userJSON, "8ZBD38wl6QwAhZvOC5PCxwZbpz9MaDjGLw9ljAMACkcdpq3LzdZw4zRDAbG2Ub5E", {expiresIn : '1h'});
+      const token = jwt.sign(userJSON, process.env.SECRET_KEY, {expiresIn : '1h'});
       res.json({ message: 'Logged in successfully', token });
     } else {
       res.status(403).json({ message: 'Invalid username or password' });
     }
   };
-
-
+  
 export const considerableCourses = async (req, res) => {
     const courses = await Course.find({published: true});
     const formattedCourses = courses.map((course) => {
@@ -110,6 +111,30 @@ export const allBuyings = async (req, res) => {
       res.status(403).json({ message: 'User not found' });
     }
   };
+
+  export const courseWithId = async (req, res) => {
+    const user = await Users.findOne({ email: req.user.email });
+    if(user){
+      const course = await Course.findById(req.params.courseId);
+      if (course) {
+        res.json({
+          title: course.title,
+          description: course.description,
+          price: course.price,
+          image: course.imgLink,
+          rating: course.rating,
+          ratingCount: course.ratingCount,
+          _id : course._id
+        });
+      } else {
+        console.log('Course not found');
+        res.status(404).json({ message: 'Course not found' });
+      }
+    }
+    else {
+      res.status(403).json({ message: 'User not found' });
+    }
+  }
 
 
 export const updateRating = async (req, res) => {
@@ -172,11 +197,7 @@ export const braintreeTokenController = async (req, res) => {
 export const brainTreePaymentController = async (req, res) => {
   try {
     const { nonce, cart } = req.body;
-    console.log(cart);
-    let total = 0;
-    cart.map((i) => {
-      total += i.price;
-    });
+    let total = cart.price;
     let newTransaction = gateway.transaction.sale(
       {
         amount: total,
