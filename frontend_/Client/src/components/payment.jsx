@@ -5,6 +5,10 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import './payment.css';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+
 
 function Payment() {
 
@@ -13,13 +17,14 @@ function Payment() {
     const [cart, setCart] = useState({});
     const [loading, setLoading]= useState(false);
     const params = useParams();
+   
 
     const navigate = useNavigate();
 
       //get payment gateway token
   const getToken = async () => {
     try {
-      const { data } = await axios.get("http://localhost:3000/users/braintree/token");                       // /api/v1/product/braintree/token
+      const { data } = await axios.get("http://localhost:3000/users/braintree/token");                 
       setClientToken(data?.clientToken);
     } catch (error) {
       console.log(error);
@@ -34,6 +39,7 @@ function Payment() {
         }
     }).then(res => {
         setCart(res.data);
+       
     });
 }
 
@@ -47,7 +53,7 @@ function Payment() {
     try {
       setLoading(true);
 
-      const { nonce } = await instance.requestPaymentMethod();         // /api/v1/product/braintree/payment
+      const { nonce } = await instance.requestPaymentMethod();        
       
       await axios.post("http://localhost:3000/users/braintree/payment", {
         nonce,
@@ -72,32 +78,44 @@ function Payment() {
 
 
   return (
-    <div className="mt-2">
-              {!clientToken  ? (
-                ""
-              ) : 
-              (
-                <>
-                  <DropIn
-                    options={{
-                      authorization: clientToken,
-                      paypal: {
+    <div style={{
+      display: "flex",
+      justifyContent : "center",
+      marginTop: "100px",
+    }}>
+    <Card sx={{ minWidth: 280  }} style = {{
+      width : "51%",
+    }}>
+    <CardContent>
+    {!clientToken ? (
+        ""
+    ) : (
+        <div>
+        <div className="head">
+        Total amount you have to pay for the for the {cart.title} course: ${cart.price} 
+        </div>
+            <DropIn
+                options={{
+                    authorization: clientToken,
+                    paypal: {
                         flow: "vault",
-                      },
-                    }}
-                    onInstance={(instance) => setInstance(instance)}
-                  />
-
-                  <button
-                    className="btn btn-primary"
-                    onClick={handlePayment}  
-                    disabled={loading ||!instance}        //loading || !instance || !auth?.user?.address
-                  >
-                    {loading ? "Processing ...." : "Make Payment"}
-                  </button>
-                </>
-              )}
+                    },
+                }}
+                onInstance={(instance) => setInstance(instance)}
+            />
+            <div style={{display: "flex", justifyContent: "center"}}>
+            <button
+                className={`payment-button ${loading || !instance ? 'disabled' : ''}`}
+                onClick={handlePayment}
+                disabled={loading || !instance}
+            >
+                {loading ? "Processing ...." : "Make Payment"}
+            </button>
             </div>
+        </div>
+    )}
+   </CardContent>
+    </Card></div>
 
   )
 }
